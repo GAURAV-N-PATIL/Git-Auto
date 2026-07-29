@@ -6,8 +6,8 @@ public class Main{
 		Logger.info("Starting SYNCAUTO...");
 		ConfigManager configManager=new ConfigManager();
 		try{
-			logger.info("Loading configurattion...");
-			GitAutoConfig config=configManager.load("config/gitauto.properties");
+			Logger.info("Loading configurattion...");
+			GitAutoConfig config=configManager.load("/home/gauravpatil/Documents/SYNC/src/config/gitauto.properties");
 			Logger.info("Loading loaded successfully.");
 			System.out.println();
 			System.out.println(config);

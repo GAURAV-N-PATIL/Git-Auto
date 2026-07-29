@@ -2,9 +2,9 @@ package logger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 public class Logger{
-	private static final DateTimeFormatter FORMATTER=DataTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+	private static final DateTimeFormatter FORMATTER=DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	private static void log(String level,String message){
-		String timestamp=localDateTime.now().format(FORMATTER);
+		String timestamp=LocalDateTime.now().format(FORMATTER);
 		System.out.printf("[%s] [%s] %s%n",timestamp,level,message);
 	}
 	public static void info(String message){
