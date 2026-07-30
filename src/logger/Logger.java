@@ -16,4 +16,7 @@ public class Logger{
 	public static void error(String message){
 		log("ERROR",message);
 	}
+	public static void success(String message){
+		log("SUCCESS",message);
+	}
 }

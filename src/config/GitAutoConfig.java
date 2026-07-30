@@ -46,12 +46,16 @@ public class GitAutoConfig{
 	@Override
 	public String toString(){
 		return """
+			-----------------------------
+			GitAuto Configuration
+			-----------------------------
 			Watch Path : %s
 			Idle Time  : %d
 			Auto Commit: %b
 			Auto Push  : %b
 			Git Branch : %s
 			log Level  : %s
+			-----------------------------
 			""".formatted(
 					watchPath,
 					idleTime,
