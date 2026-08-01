@@ -1,17 +1,19 @@
+import ai.AIException;
+import ai.AIManager;
 import config.ConfigManager;
 import config.GitAutoConfig;
 import config.InvalidConfigException;
+import git.GitResult;
 import git.GitService;
 import logger.Logger;
 import model.GitFile;
-import util.Messages;
+import utils.Messages;
 import ui.ConsoleUI;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
 public class Main{
     public static void main(String[] args) {
 	ConsoleUI.banner();
@@ -55,12 +57,24 @@ public class Main{
             printStagedFiles(stagedFiles);       
 	    System.out.println();
 	    System.out.println("Repository : "+new File(System.getProperty("user.dir")).getName());
-            System.out.println("Branch     : "+gitService.getCurrentBranch());
+            String currentBranch = gitService.getCurrentBranch();
+            System.out.println("Branch     : "+currentBranch);
             System.out.println("Files      : "+stagedFiles.size()+" staged");
-            System.out.println();
-            System.out.println("Next Step:");
-            System.out.println("AI Commit Message Generation");
-            System.out.println();
+
+            String commitMessage = resolveCommitMessage(gitService, stagedFiles);
+            if (commitMessage == null) {
+                Logger.info(Messages.COMMIT_CANCELLED);
+                return;
+            }
+            Logger.info(Messages.CREATING_COMMIT);
+            GitResult commitResult = gitService.commit(commitMessage);
+            if (!commitResult.isSuccess()) {
+                Logger.error(Messages.COMMIT_FAILED);
+                Logger.error(commitResult.getOutput());
+                return;
+            }
+            Logger.success(Messages.COMMIT_SUCCESS);
+            promptAndPush(gitService, currentBranch, config);
             Logger.success(Messages.INITIALIZATION_COMPLETE);
         } catch (InvalidConfigException e) {
             Logger.error(Messages.CONFIG_LOAD_FAILED);
@@ -128,9 +142,93 @@ public class Main{
             return gitService.stageFiles(selectedFiles);
         }
     }
+    private static String resolveCommitMessage(GitService gitService, List<String> stagedFiles) {
+        Scanner scanner = new Scanner(System.in);
+        AIManager aiManager = new AIManager();
+        String diff = gitService.getStagedDiff();
+        while (true) {
+            String suggestion = null;
+            Logger.info(Messages.GENERATING_COMMIT_MESSAGE);
+            try {
+                suggestion = aiManager.generateCommitMessage(stagedFiles, diff);
+            } catch (AIException e) {
+                Logger.error(Messages.AI_GENERATION_FAILED);
+                Logger.error(e.getMessage());
+            } catch (IOException e) {
+                Logger.error(Messages.AI_CONFIG_READ_FAILED);
+                Logger.error(e.getMessage());
+            }
+            if (suggestion == null || suggestion.isBlank()) {
+                Logger.info(Messages.AI_UNAVAILABLE);
+                return readCustomMessage(scanner);
+            }
+            System.out.println();
+            System.out.println(Messages.COMMIT_MESSAGE_HEADER);
+            System.out.println(Messages.DIVIDER);
+            System.out.println(suggestion);
+            System.out.println(Messages.DIVIDER);
+            System.out.println();
+            System.out.println("1. Commit with this message");
+            System.out.println("2. Regenerate");
+            System.out.println("3. Write my own message");
+            System.out.println("4. Cancel");
+            System.out.print("> ");
+            String choice = scanner.nextLine().trim();
+            switch (choice) {
+                case "1":
+                    return suggestion;
+                case "2":
+                    continue;
+                case "3":
+                    return readCustomMessage(scanner);
+                case "4":
+                    return null;
+                default:
+                    Logger.error("Invalid option.");
+            }
+        }
+    }
+    private static String readCustomMessage(Scanner scanner) {
+        System.out.println();
+        System.out.println(Messages.ENTER_CUSTOM_MESSAGE);
+        StringBuilder message = new StringBuilder();
+        while (true) {
+            String line = scanner.nextLine();
+            if (line.isBlank()) {
+                break;
+            }
+            if (message.length() > 0) {
+                message.append("\n");
+            }
+            message.append(line);
+        }
+        String result = message.toString().trim();
+        return result.isEmpty() ? null : result;
+    }
+    private static void promptAndPush(GitService gitService, String branch, GitAutoConfig config) {
+        Scanner scanner = new Scanner(System.in);
+        if (!gitService.hasRemote()) {
+            Logger.error(Messages.NO_REMOTE);
+            return;
+        }
+        String targetBranch = (branch == null || branch.isBlank())
+                ? config.getGitBranch()
+                : branch;
+        System.out.println();
+        System.out.println(Messages.pushPrompt(targetBranch));
+        System.out.print("> ");
+        String input = scanner.nextLine().trim().toLowerCase();
+        if (!input.equals("y") && !input.equals("yes")) {
+            Logger.info(Messages.PUSH_SKIPPED);
+            return;
+        }
+        Logger.info(Messages.PUSHING);
+        GitResult result = gitService.push("origin", targetBranch);
+        if (result.isSuccess()) {
+            Logger.success(Messages.PUSH_SUCCESS);
+        } else {
+            Logger.error(Messages.PUSH_FAILED);
+            Logger.error(result.getOutput());
+        }
+    }
 }
-
-
-
-
-            
