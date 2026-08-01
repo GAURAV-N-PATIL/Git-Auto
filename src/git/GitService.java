@@ -5,12 +5,12 @@ import java.util.List;
 public class GitService{
 	private final GitCommandRunner runner=new GitCommandRunner();
 	public boolean isGitRepository(){
-		GitResult result=runner.run("git","rev-parse","--is-inside-work-tree");
+		GitResult result=runner.run(Commands.checkRepository());
 		return result.isSuccess() && result.getOutput().trim().equals("true");
 	}
 	public List<GitFile> getModifiedFiles(){
 		List<GitFile> files=new ArrayList<>();
-		GitResult result=runner.run("git","status","--short");
+		GitResult result=runner.run(Commands.status());
 		if (!result.isSuccess()){
 			return files;
 		}
@@ -25,20 +25,20 @@ public class GitService{
 		return files;
 	}
 	public boolean stageAll(){
-		GitResult result=runner.run("git","add",".");
+		GitResult result=runner.run(Commands.addAll());
 		return result.isSuccess();
 	}
 	public boolean stageFiles(List<String> files){
 		List<String> command=new ArrayList<>();
-		command.add("git");
-		command.add("add");
-		command.addAll(files);
-		GitResult result=runner.run(command.toArray(new String[0]));
+		if(files==null || files.isEmpty()){
+			return false;
+		}
+		GitResult result=runner.run(Commands.addFiles(files));
 		return result.isSuccess();
 	}
 	public List<String> getStagedFiles(){
 		List<String> stagedFiles=new ArrayList<>();
-		GitResult result=runner.run("git","diff","--cached","--name-only");
+		GitResult result=runner.run(Commands.stagedFiles());
 		if(!result.isSuccess()){
 			return stagedFiles;
 		}
@@ -49,5 +49,12 @@ public class GitService{
 			}
 		}
 		return stagedFiles;
+	}
+	public String getCurrentBranch(){
+		GitResult result=runner.run(Commands.currentBranch());
+		if(!result.isSuccess()){
+			return "";
+		}
+		return result.getOutput();
 	}
 }
