@@ -6,9 +6,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 public class AIClient {
     private static final String API_URL =
-            "https://api.cerebras.ai/v1/chat/completions";
+            "https://openrouter.ai/api/v1/chat/completions";
+    // Any OpenRouter model ID ending in ":free" works here at no cost.
+    // Check https://openrouter.ai/models?max_price=0 for the current list,
+    // since free model availability rotates over time.
     private static final String MODEL =
-            "gpt-oss-120b";
+            "openai/gpt-oss-120b:free";
     private final HttpClient httpClient;
     public AIClient() {
         httpClient = HttpClient.newHttpClient();
@@ -24,6 +27,10 @@ public class AIClient {
                             .uri(URI.create(API_URL))
                             .header("Authorization", "Bearer " + apiKey)
                             .header("Content-Type", "application/json")
+                            // Optional per OpenRouter docs, but recommended:
+                            // identifies the app for their rankings page.
+                            .header("HTTP-Referer", "https://github.com/git-auto")
+                            .header("X-Title", "Git-Auto")
                             .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                             .build();
             HttpResponse<String> response =
@@ -33,7 +40,7 @@ public class AIClient {
             return handleResponse(response);
         } catch (IOException e) {
             throw new AIException(
-                    "Unable to connect to Cerebras.",
+                    "Unable to connect to OpenRouter.",
                     e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -81,7 +88,7 @@ public class AIClient {
             default:
                 if (status >= 500) {
                     throw new AIException(
-                            "Cerebras service unavailable.");
+                            "OpenRouter service unavailable.");
                 }
                 throw new AIException(
                         "Request failed:\n" + response.body());
