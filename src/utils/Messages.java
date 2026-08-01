@@ -47,4 +47,11 @@ public final class Messages {
     public static String pushPrompt(String branch){
     	return "Push this commit to origin/"+branch+"? (y/n)";
     }
+    public static String autoModePrompt(int idleTime, boolean autoPush){
+    	return "Auto mode is enabled in your config: after " + idleTime
+    		+ "s of no changes, Git-Auto can commit automatically"
+    		+ (autoPush ? " and push." : " (auto.push is off, so pushing still needs your say-so).")
+    		+ "\nStart in auto mode now? (y/n)";
+    }
+    public static final String AUTO_MODE_DECLINED ="Continuing in one-time interactive mode.";
 }
