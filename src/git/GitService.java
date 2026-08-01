@@ -24,4 +24,29 @@ public class GitService{
 		}
 		return files;
 	}
+	public boolean stageAll(){
+		GitResult result=runner.run("git","add",".");
+		return result.isSuccess();
+	}
+	public boolean stageFiles(list<String> files){
+		command.add("git");
+		command.add("add");
+		command.allAll(files);
+		GitResult result=runner.run(command.toArray(new String[0]));
+		return result.isSuccess();
+	}
+	public List<String> getStagedFiles(){
+		List<String> stagedFiles=new ArrayList<>();
+		GitResult result=runner.run("git","diff","--cached","--name-only");
+		if(!result.isSuccess()){
+			return stagedFiles;
+		}
+		String[] lines=result.getOutput().split("\n");
+		for (String line:lines){
+			if(!lines.isBlank()){
+				stagedFiles.add(line.trim());
+			}
+		}
+		return stagedFiles;
+	}
 }
