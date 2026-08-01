@@ -9,9 +9,10 @@ public class AIClient {
             "https://openrouter.ai/api/v1/chat/completions";
     // Any OpenRouter model ID ending in ":free" works here at no cost.
     // Check https://openrouter.ai/models?max_price=0 for the current list,
-    // since free model availability rotates over time.
+    // since free model availability rotates over time — models can be
+    // pulled from the free tier with little notice (laguna-m.1:free was).
     private static final String MODEL =
-            "openai/gpt-oss-120b:free";
+            "poolside/laguna-xs-2.1:free";
     private final HttpClient httpClient;
     public AIClient() {
         httpClient = HttpClient.newHttpClient();
@@ -57,7 +58,7 @@ public class AIClient {
                   "messages":[
                     {
                       "role":"system",
-                      "content":"You generate concise Conventional Commit messages. Return ONLY the commit message."
+                      "content":"You generate git commit messages in the exact format '<type>: <short description>', where <type> is one of: feat, fix, docs, chore, refactor, ci. Never use any other type. No scope, no body, no markdown. Return ONLY that single line."
                     },
                     {
                       "role":"user",
