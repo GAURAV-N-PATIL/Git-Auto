@@ -55,6 +55,26 @@ public class GitService{
 		if(!result.isSuccess()){
 			return "";
 		}
+		return result.getOutput().trim();
+	}
+	public String getStagedDiff(){
+		GitResult result=runner.run(Commands.diffCached());
+		if(!result.isSuccess()){
+			return "";
+		}
 		return result.getOutput();
+	}
+	public GitResult commit(String message){
+		if(message==null || message.isBlank()){
+			return new GitResult(false, "Commit message cannot be empty.");
+		}
+		return runner.run(Commands.commit(message));
+	}
+	public boolean hasRemote(){
+		GitResult result=runner.run(Commands.remoteList());
+		return result.isSuccess() && !result.getOutput().isBlank();
+	}
+	public GitResult push(String remote, String branch){
+		return runner.run(Commands.push(remote, branch));
 	}
 }
