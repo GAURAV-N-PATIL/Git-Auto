@@ -70,6 +70,7 @@ public class AISetupWizard {
             if (apiKey.isBlank()) {
                 System.out.println("API key cannot be empty.");
                 continue;
+            }
             if (askToSave()) {
                 try {
                     configManager.save(new AIConfig(apiKey));
