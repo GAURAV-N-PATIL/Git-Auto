@@ -7,6 +7,7 @@ import git.GitResult;
 import git.GitService;
 import logger.Logger;
 import model.GitFile;
+import scheduler.CommitScheduler;
 import utils.Messages;
 import ui.ConsoleUI;
 import java.io.File;
@@ -36,6 +37,14 @@ public class Main{
                 return;
             }
             Logger.success(Messages.REPOSITORY_DETECTED);
+
+            if (config.isAutoCommit() && confirmAutoMode(config)) {
+                CommitScheduler scheduler = new CommitScheduler(gitService, config);
+                Runtime.getRuntime().addShutdownHook(new Thread(scheduler::stop));
+                scheduler.start();
+                return;
+            }
+
             Logger.info(Messages.SCANNING_FILES);
             List<GitFile> files=gitService.getModifiedFiles();
             if (files.isEmpty()){
@@ -86,6 +95,18 @@ public class Main{
             Logger.error(Messages.UNEXPECTED_ERROR);
             Logger.error(e.getMessage());
         }
+    }
+    private static boolean confirmAutoMode(GitAutoConfig config) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println();
+        System.out.println(Messages.autoModePrompt(config.getIdleTime(), config.isAutoPush()));
+        System.out.print("> ");
+        String input = scanner.nextLine().trim().toLowerCase();
+        if (input.equals("y") || input.equals("yes")) {
+            return true;
+        }
+        Logger.info(Messages.AUTO_MODE_DECLINED);
+        return false;
     }
     private static void printModifiedFiles(List<GitFile> files) {
         System.out.println();
