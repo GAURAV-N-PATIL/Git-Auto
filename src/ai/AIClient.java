@@ -1,7 +1,4 @@
 package ai;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -10,50 +7,24 @@ import java.net.http.HttpResponse;
 public class AIClient {
     private static final String API_URL =
             "https://api.cerebras.ai/v1/chat/completions";
-    private static final String MODEL ="gpt-oss-120b";
+    private static final String MODEL =
+            "gpt-oss-120b";
     private final HttpClient httpClient;
-    private final Gson gson;
     public AIClient() {
         httpClient = HttpClient.newHttpClient();
-        gson = new Gson();
     }
     public String generateCommitMessage(
             String apiKey,
             String prompt)
             throws AIException {
         try {
-            JsonObject body = new JsonObject();
-            body.addProperty("model", MODEL);
-            JsonArray messages = new JsonArray();
-            JsonObject system = new JsonObject();
-            system.addProperty(
-                    "role",
-                    "system");
-            system.addProperty(
-                    "content",
-                    "You generate concise Conventional Commit messages. "
-                            + "Return ONLY the commit message.");
-            JsonObject user = new JsonObject();
-            user.addProperty(
-                    "role",
-                    "user");
-            user.addProperty(
-                    "content",
-                    prompt);
-            messages.add(system);
-            messages.add(user);
-            body.add("messages", messages);
+            String requestBody = buildRequestBody(prompt);
             HttpRequest request =
                     HttpRequest.newBuilder()
                             .uri(URI.create(API_URL))
-                            .header(
-                                    "Authorization",
-                                    "Bearer " + apiKey)
-                            .header(
-                                    "Content-Type",
-                                    "application/json")
-                            .POST(HttpRequest.BodyPublishers.ofString(
-                                    gson.toJson(body)))
+                            .header("Authorization", "Bearer " + apiKey)
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                             .build();
             HttpResponse<String> response =
                     httpClient.send(
@@ -71,48 +42,89 @@ public class AIClient {
                     e);
         }
     }
-    private String handleResponse(
-            HttpResponse<String> response)
+    private String buildRequestBody(String prompt) {
+        prompt = escapeJson(prompt);
+        return """
+                {
+                  "model":"%s",
+                  "messages":[
+                    {
+                      "role":"system",
+                      "content":"You generate concise Conventional Commit messages. Return ONLY the commit message."
+                    },
+                    {
+                      "role":"user",
+                      "content":"%s"
+                    }
+                  ]
+                }
+                """.formatted(MODEL, prompt);
+    }
+    private String escapeJson(String text) {
+        return text
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+	        .replace("\r", "");
+    }
+    private String handleResponse(HttpResponse<String> response)
             throws AIException {
         int status = response.statusCode();
         switch (status) {
             case 200:
-                return parseCommitMessage(
-                        response.body());
+                return parseCommitMessage(response.body());
             case 401:
             case 403:
-                throw new AIException(
-                        "Invalid API key.");
+                throw new AIException("Invalid API key.");
             case 429:
-                throw new AIException(
-                        "Rate limit exceeded.");
+                throw new AIException("Rate limit exceeded.");
             default:
                 if (status >= 500) {
                     throw new AIException(
                             "Cerebras service unavailable.");
                 }
                 throw new AIException(
-                        "Request failed.\n"
-                                + response.body());
+                        "Request failed:\n" + response.body());
         }
     }
     private String parseCommitMessage(String json)
             throws AIException {
-        try {
-            JsonObject root =
-                    gson.fromJson(json, JsonObject.class);
-            return root
-                    .getAsJsonArray("choices")
-                    .get(0)
-                    .getAsJsonObject()
-                    .getAsJsonObject("message")
-                    .get("content")
-                    .getAsString()
-                    .trim();
-        } catch (Exception e) {
-            throw new AIException(
-                    "Failed to parse AI response.",
-                    e);
+        String key = "\"content\":\"";
+        int start = json.indexOf(key);
+        if (start == -1) {
+            throw new AIException("Unable to parse AI response.");
         }
+        start += key.length();
+        StringBuilder message = new StringBuilder();
+        boolean escaped = false;
+        for (int i = start; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (escaped) {
+                switch (c) {
+                    case 'n':
+                        message.append('\n');
+                        break;
+                    case '"':
+                        message.append('"');
+                        break;
+                    case '\\':
+                        message.append('\\');
+                        break;
+                    default:
+                        message.append(c);
+                }
+                escaped = false;
+                continue;
+            }
+            if (c == '\\') {
+                escaped = true;
+                continue;
+            }
+            if (c == '"') {
+                break;
+            }
+            message.append(c);
+        }
+        return message.toString().trim();
     }
 }
