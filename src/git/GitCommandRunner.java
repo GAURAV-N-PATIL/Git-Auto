@@ -8,7 +8,7 @@ public class GitCommandRunner{
 			ProcessBuilder builder = new ProcessBuilder(command);
 			builder.redirectErrorStream(true);
 			Process process=builder.start();
-			BufferReader reader=new BufferedReader(new InputStreamReader(process.getInputStream()));
+			BufferedReader reader=new BufferedReader(new InputStreamReader(process.getInputStream()));
 			String line;
 			while((line=reader.readLine())!=null){
 				output.append(line).append("\n");
