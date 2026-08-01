@@ -29,4 +29,16 @@ public final class Commands {
     public static String[] fullStatus() {
         return new String[]{"git","status"};
     }
+    public static String[] diffCached() {
+        return new String[]{"git","diff","--cached"};
+    }
+    public static String[] commit(String message) {
+        return new String[]{"git","commit","-m",message};
+    }
+    public static String[] push(String remote, String branch) {
+        return new String[]{"git","push",remote,branch};
+    }
+    public static String[] remoteList() {
+        return new String[]{"git","remote"};
+    }
 }
