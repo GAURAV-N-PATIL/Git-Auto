@@ -1,6 +1,7 @@
+package model;
 public class GitFile{
-	private String status;
-	private String path;
+	private final String status;
+	private final String path;
 	public GitFile(String status,String path){
 		this.status=status;
 		this.path=path;
@@ -10,5 +11,9 @@ public class GitFile{
 	}
 	public String getPath(){
 		return path;
+	}
+	@Override
+	public String toString(){
+		return status+" " +path;
 	}
 }
