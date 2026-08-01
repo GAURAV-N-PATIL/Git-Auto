@@ -4,105 +4,123 @@ import config.InvalidConfigException;
 import git.GitService;
 import logger.Logger;
 import model.GitFile;
+import util.Messages;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
 public class Main{
     public static void main(String[] args) {
         Logger.info("Starting SYNCAUTO...");
-        String configPath=args.length>0 
-                ?args[0] 
-                :System.getProperty("user.dir")+File.separator+"src"+File.separator+"config"+File.separator+"gitauto.properties";
+        String configPath = args.length > 0
+                ? args[0]
+                : System.getProperty("user.dir")
+                + File.separator + "src"
+                + File.separator + "config"
+                + File.separator + "gitauto.properties";
         ConfigManager configManager=new ConfigManager();
         try{
-            Logger.info("Loading configuration...");
+            Logger.info(Messages.LOADING_CONFIG);
             GitAutoConfig config=configManager.load(configPath);
-            Logger.success("Configuration loaded successfully.");
+            Logger.success(Messages.CONFIG_SUCCESS);
             GitService gitService=new GitService();
-            Logger.info("Checking Git repository...");
+            Logger.info(Messages.CHECKING_REPOSITORY);
             if (!gitService.isGitRepository()){ 
-                Logger.error("Current directory is not a Git repository.");
+                Logger.error(Messages.NOT_A_REPOSITORY);
                 return;
             }
-            Logger.success("Git repository detected.");
-            Logger.info("Scanning modified files...");
+            Logger.success(Messages.REPOSITORY_DETECTED);
+            Logger.info(Messages.SCANNING_FILES);
             List<GitFile> files=gitService.getModifiedFiles();
             if (files.isEmpty()){
-                Logger.info("No modified files found.");
+                Logger.info(Messages.NO_MODIFIED_FILES);
                 return;
             }
-            System.out.println();
-            System.out.println("Modified Files");
-            System.out.println("-------------------------------");
-            int index=1;
-            for(GitFile file:files){
-                System.out.printf("%d. %s%n", index++, file.getPath());
+	    printModifiedFiles(files);
+            boolean staged = stageFiles(gitService, files);
+            if (!staged) {
+                Logger.error(Messages.STAGING_FAILED);
+                return;
             }
-            Scanner scanner=new Scanner(System.in);
-            boolean staged=false;
-            while (true) {
-                System.out.println();
-                System.out.println("Enter '.' to stage all");
-                System.out.println("or file numbers separated by commas.");
-                System.out.print("> ");
-                String input=scanner.nextLine().trim();
-                if (input.equals(".")){
-                    staged=gitService.stageAll();
-                    break;
-                } else{
-                    String[] selections=input.split(",");
-                    List<String> selectedFiles=new ArrayList<>();
-                    boolean validInput=true;
-                    for (String selection:selections){
-                        selection=selection.trim();
-                        try{
-                            int selectedIndex=Integer.parseInt(selection)-1;
-                            if (selectedIndex<0||selectedIndex>=files.size()){
-                                Logger.error("Invalid file number: "+(selectedIndex+1));
-                                validInput=false;
-                                break;
-                            }
-                            selectedFiles.add(files.get(selectedIndex).getPath());
-                        } catch(NumberFormatException e){
-                            Logger.error("'"+selection+"' is not a valid file number.");
-                            validInput=false;
-                            break;
-                        }
+            Logger.success(Messages.STAGING_SUCCESS);
+            List<String> stagedFiles = gitService.getStagedFiles();
+            if (stagedFiles.isEmpty()) {
+                Logger.error(Messages.NO_STAGED_FILES);
+                return;
+            }
+            printStagedFiles(stagedFiles);
+            Logger.success(Messages.INITIALIZATION_COMPLETE);
+        } catch (InvalidConfigException e) {
+            Logger.error(Messages.CONFIG_LOAD_FAILED);
+            Logger.error(e.getMessage());
+        } catch (IOException e) {
+            Logger.error(Messages.CONFIG_READ_FAILED);
+            Logger.error(e.getMessage());
+        } catch (Exception e) {
+            Logger.error(Messages.UNEXPECTED_ERROR);
+            Logger.error(e.getMessage());
+        }
+    }
+    private static void printModifiedFiles(List<GitFile> files) {
+        System.out.println();
+        System.out.println(Messages.MODIFIED_FILES_HEADER);
+        System.out.println(Messages.DIVIDER);
+        int index = 1;
+        for (GitFile file : files) {
+            System.out.printf("%d. %s%n",
+                    index++,
+                    file.getPath());
+        }
+    }
+    private static void printStagedFiles(List<String> stagedFiles) {
+        System.out.println();
+        System.out.println(Messages.STAGED_FILES_HEADER);
+        System.out.println(Messages.DIVIDER);
+        for (String file : stagedFiles) {
+            System.out.println(file);
+        }
+    }
+    private static boolean stageFiles(GitService gitService,List<GitFile> files) {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.println();
+            System.out.println(Messages.ENTER_STAGE_PROMPT);
+            System.out.println(Messages.ENTER_FILE_NUMBERS);
+            System.out.print("> ");
+            String input = scanner.nextLine().trim();
+            if (input.equals(".")) {
+                return gitService.stageAll();
+            }
+            String[] selections = input.split(",");
+            List<String> selectedFiles = new ArrayList<>();
+            boolean valid = true;
+            for (String selection : selections) {
+                selection = selection.trim();
+                try {
+                    int index = Integer.parseInt(selection) - 1;
+                    if (index < 0 || index>=files.size()){
+                        Logger.error(Messages.invalidFileNumber(index + 1));                        	      valid = false;
+                        break;
                     }
-                    if(!validInput){
-                        Logger.info("Please try again.");
-                        continue;
-                    }
-                    staged=gitService.stageFiles(selectedFiles);
+                    selectedFiles.add(files.get(index).getPath());
+                } catch (NumberFormatException e){
+		    Logger.error(Messages.invalidSelection(selection));
+                    valid = false;
                     break;
                 }
             }
-            if (!staged){
-                Logger.error("Failed to stage files.");
-                return;
+            if (!valid) {
+                Logger.info(Messages.TRY_AGAIN);
+                continue;
             }
-            Logger.success("Files staged successfully.");
-            List<String> stagedFiles=gitService.getStagedFiles();
-            if (stagedFiles.isEmpty()){
-                Logger.error("No staged files found.");
-                return;
-            }
-            System.out.println();
-            System.out.println("Staged Files");
-            System.out.println("------------------------");
-            for (String file:stagedFiles){
-                System.out.println(file);
-            }
-            Logger.success("Initialization complete.");
-        } catch (InvalidConfigException e){
-            Logger.error("Failed to load configuration.");
-            Logger.error(e.getMessage());
-        } catch(IOException e){
-            Logger.error("Unable to read configuration files.");
-            Logger.error(e.getMessage());
-        } catch(Exception e){
-            Logger.error("Unexpected Error");
-            e.printStackTrace();
+            return gitService.stageFiles(selectedFiles);
         }
     }
 }
+
+
+
+
+            
