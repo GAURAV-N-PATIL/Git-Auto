@@ -1,16 +1,18 @@
 # Git-Auto
 
-A small CLI tool that automates the boring parts of committing: it scans your repo for changes, lets you pick what to stage, writes the commit message for you using AI, and offers to push — all from one command.
+A small CLI tool that automates the boring parts of committing: it scans your repo for changes, lets you pick what to stage, writes the commit message for you using AI, and offers to push — all from one command. Opt in, and it'll do all of that on its own after you've gone idle.
 
 Built in plain Java with no external dependencies.
 
 ## Features
 
+- **Run it as `gitauto` from anywhere** — no `cd`-ing into the project or typing `./scripts/run.sh`.
+- **Auto mode** — with your permission, commits (and optionally pushes) automatically once the repo's been idle for a configurable stretch. Runs unattended until you stop it.
 - **Change detection** — scans the current repo (`git status --porcelain`) and lists every modified, added, or deleted file.
 - **Selective staging** — stage everything with `.`, or pick specific files by number (`1,3,4`).
 - **AI-generated commit messages** — sends the staged diff to a language model (via [OpenRouter](https://openrouter.ai)) and gets back a properly formatted commit message.
-- **Review before committing** — accept the suggestion, regenerate it, write your own instead, or cancel entirely.
-- **Push prompt** — after a successful commit, asks whether to push to the current branch's remote.
+- **Review before committing** — accept the suggestion, regenerate it, write your own instead, or cancel entirely (manual mode only — auto mode skips this by design).
+- **Push prompt** — in manual mode, asks whether to push to the current branch's remote.
 - **Zero-cost AI** — configured to use OpenRouter's free-tier models, so commit message generation doesn't cost anything.
 
 ## Commit message format
@@ -42,24 +44,25 @@ No scopes, no bodies, no markdown — just a clean, conventional one-liner under
 
 ## Getting started
 
-### 1. Build
+### Option A — install `gitauto` as a command (recommended)
 
 ```bash
-./scripts/build.sh
+./scripts/install.sh
 ```
 
-Compiles everything in `src/` into `bin/`.
-
-### 2. Run
+This builds the project and puts a `gitauto` wrapper on your `PATH` (in `~/.local/bin`). If that directory isn't already on your `PATH`, the script tells you the one line to add to your shell profile. After that:
 
 ```bash
-./scripts/run.sh
+gitauto
 ```
 
-or directly:
+runs from inside any repo — no need to `cd` into this project or remember `./scripts/run.sh`.
+
+### Option B — run from the project directory
 
 ```bash
-java -cp bin Main
+./scripts/build.sh   # compiles src/ into bin/
+./scripts/run.sh      # java -cp bin Main
 ```
 
 By default Git-Auto looks for its config at `src/config/gitauto.properties`. You can point it at a different file:
@@ -68,7 +71,7 @@ By default Git-Auto looks for its config at `src/config/gitauto.properties`. You
 java -cp bin Main /path/to/your/gitauto.properties
 ```
 
-### 3. Clean
+### Clean
 
 ```bash
 ./scripts/clean.sh
@@ -92,9 +95,9 @@ log.level=INFO
 | Key            | Description                                              |
 |----------------|------------------------------------------------------------|
 | `watch.path`   | Repository directory to operate on                         |
-| `idle.time`    | Idle seconds before an auto-commit (reserved, see Roadmap) |
-| `auto.commit`  | Enable automatic commits (reserved, see Roadmap)           |
-| `auto.push`    | Enable automatic pushes (reserved, see Roadmap)             |
+| `idle.time`    | Seconds of no repo changes before an auto-commit fires      |
+| `auto.commit`  | If `true`, Git-Auto offers auto mode (see below) on startup |
+| `auto.push`    | If `true`, auto mode also pushes after each auto-commit     |
 | `git.branch`   | Branch to push to when none is checked out                 |
 | `log.level`    | Log verbosity                                               |
 
@@ -118,10 +121,33 @@ Free-tier model availability on OpenRouter rotates from time to time. If commit 
 
 If no key is configured (or generation fails for any reason), Git-Auto simply falls back to letting you type your own commit message.
 
-## Usage walkthrough
+## Auto mode
+
+Set `auto.commit=true` in `gitauto.properties` and Git-Auto will offer to run unattended: every time you start it, if that flag is on, it asks once —
 
 ```
-$ ./scripts/run.sh
+Auto mode is enabled in your config: after 300s of no changes, Git-Auto can
+commit automatically and push.
+Start in auto mode now? (y/n)
+```
+
+Say **y** and it stops asking anything further. It sits and polls the repo every few seconds; once you've stopped touching the working tree for `idle.time` seconds and there are still uncommitted changes, it:
+
+1. Stages everything
+2. Generates a commit message with AI (falling back to a generic `chore: update N files` message if AI is unavailable)
+3. Commits
+4. Pushes automatically — **only if** `auto.push=true`. If `auto.push=false`, it commits locally and leaves pushing to you.
+
+It keeps running — and keeps auto-committing every time the repo goes idle again — until you stop it with Ctrl+C.
+
+Say **n** (or leave `auto.commit=false`) and Git-Auto behaves exactly as before: a one-shot interactive run that walks you through staging, message review, and a push prompt, then exits.
+
+## Usage walkthrough
+
+### Manual mode (the default, or if you decline auto mode)
+
+```
+$ gitauto
 
 ========================================================
                       SYNCAUTO
@@ -175,39 +201,60 @@ Push to 'main'? (y/n)
 [SUCCESS] Pushed successfully.
 ```
 
+### Auto mode (`auto.commit=true`, confirmed with `y`)
+
+```
+$ gitauto
+
+[INFO] Starting Git-Auto...
+[SUCCESS] Configuration loaded.
+[SUCCESS] Git repository detected.
+
+Auto mode is enabled in your config: after 300s of no changes, Git-Auto can
+commit automatically and push.
+Start in auto mode now? (y/n)
+> y
+
+[INFO] Auto mode active. Watching for changes every 5s. Press Ctrl+C to stop.
+
+  ... you keep editing files ...
+
+[INFO] Idle for 300s with pending changes. Auto-committing...
+[SUCCESS] Auto-committed: feat: add pagination to results view
+[INFO] Auto-pushing to main...
+[SUCCESS] Auto-push complete.
+```
+
 ## Project structure
 
 ```
 Git-Auto-main/
 ├── src/
-│   ├── Main.java              # Entry point / interactive flow
-│   ├── ai/                    # AI commit-message generation (OpenRouter client, prompt builder, setup wizard)
-│   ├── cli/                   # Command-line entry constants (WIP)
-│   ├── config/                # Config loading, validation, and model
-│   ├── git/                   # Git command execution and parsing
-│   ├── logger/                # Timestamped console logging
-│   ├── model/                 # Domain models (GitFile)
-│   ├── scheduler/              # Idle/auto-commit scheduling (WIP, not yet implemented)
-│   ├── ui/                    # Console banner/section helpers
-│   ├── utils/                 # User-facing message strings
-│   └── watcher/               # Filesystem watching for auto-commit (WIP, not yet implemented)
+│   ├── Main.java               # Entry point: auto-mode gate + interactive flow
+│   ├── ai/                     # AI commit-message generation (OpenRouter client, prompt builder, setup wizard)
+│   ├── cli/                    # Command-line entry constants (WIP)
+│   ├── config/                 # Config loading, validation, and model
+│   ├── git/                    # Git command execution and parsing
+│   ├── logger/                 # Timestamped console logging
+│   ├── model/                  # Domain models (GitFile)
+│   ├── scheduler/               # Idle detection + unattended commit/push loop (CommitScheduler, IdleTimer)
+│   ├── ui/                     # Console banner/section helpers
+│   ├── utils/                  # User-facing message strings
+│   └── watcher/                # Filesystem watching (WIP, not yet implemented — see below)
 ├── scripts/
 │   ├── build.sh
 │   ├── run.sh
+│   ├── install.sh              # Installs the 'gitauto' command onto your PATH
 │   └── clean.sh
 └── README.md
 ```
 
 ## Roadmap / known limitations
 
-Git-Auto currently runs as an interactive, one-shot CLI command — you run it, it walks you through staging and committing once, and exits. The following pieces exist in the config and folder structure but aren't wired up yet:
+- **Directory watching** (`watcher/`) — currently unimplemented. Auto mode detects changes by polling `git status` every 5 seconds instead of using OS-level filesystem events. This is simpler and avoids `.git`-folder/recursive-watch edge cases, but it does mean up to a few seconds of lag before a change is noticed, and it can't distinguish *what* changed mid-cycle — only that the working tree differs from the last poll.
+- **Full CLI argument parsing** (`cli/CLIParser.java`) — currently only an optional config path is accepted as `args[0]`. Flags like `--once` (skip the auto-mode prompt) or `--yes` (skip confirmation) aren't there yet.
 
-- **Directory watching** (`watcher/`) — watching a repo for changes automatically
-- **Idle-triggered auto-commit** (`scheduler/`, `idle.time`, `auto.commit`) — committing automatically after a period of inactivity
-- **Auto-push** (`auto.push`) — pushing automatically without the interactive prompt
-- **Full CLI argument parsing** (`cli/CLIParser.java`) — currently only an optional config path is accepted
-
-Contributions or ideas on any of these are welcome.
+Contributions or ideas on either of these are welcome.
 
 ## License
 
