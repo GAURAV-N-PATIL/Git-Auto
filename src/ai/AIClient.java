@@ -7,10 +7,7 @@ import java.net.http.HttpResponse;
 public class AIClient {
     private static final String API_URL =
             "https://openrouter.ai/api/v1/chat/completions";
-    // Any OpenRouter model ID ending in ":free" works here at no cost.
-    // Check https://openrouter.ai/models?max_price=0 for the current list,
-    // since free model availability rotates over time — models can be
-    // pulled from the free tier with little notice (laguna-m.1:free was).
+    // if the model becomes paid i need to make changes here
     private static final String MODEL =
             "poolside/laguna-xs-2.1:free";
     private final HttpClient httpClient;
@@ -28,8 +25,6 @@ public class AIClient {
                             .uri(URI.create(API_URL))
                             .header("Authorization", "Bearer " + apiKey)
                             .header("Content-Type", "application/json")
-                            // Optional per OpenRouter docs, but recommended:
-                            // identifies the app for their rankings page.
                             .header("HTTP-Referer", "https://github.com/git-auto")
                             .header("X-Title", "Git-Auto")
                             .POST(HttpRequest.BodyPublishers.ofString(requestBody))
