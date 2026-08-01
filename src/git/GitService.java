@@ -28,10 +28,11 @@ public class GitService{
 		GitResult result=runner.run("git","add",".");
 		return result.isSuccess();
 	}
-	public boolean stageFiles(list<String> files){
+	public boolean stageFiles(List<String> files){
+		List<String> command=new ArrayList<>();
 		command.add("git");
 		command.add("add");
-		command.allAll(files);
+		command.addAll(files);
 		GitResult result=runner.run(command.toArray(new String[0]));
 		return result.isSuccess();
 	}
@@ -43,7 +44,7 @@ public class GitService{
 		}
 		String[] lines=result.getOutput().split("\n");
 		for (String line:lines){
-			if(!lines.isBlank()){
+			if(!line.isBlank()){
 				stagedFiles.add(line.trim());
 			}
 		}
