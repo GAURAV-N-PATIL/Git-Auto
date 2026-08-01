@@ -34,7 +34,7 @@ public class AIConfigManager{
             directory.mkdirs();
         }
         Properties properties = new Properties();
-        Properties.setProperty(
+        properties.setProperty(
                 "apiKey",
                 config.getApiKey());
         try (FileOutputStream output =
