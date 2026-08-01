@@ -6,6 +6,8 @@ import logger.Logger;
 import model.GitFile;
 import java.io.IOException;
 import java.util.List;
+import java.util.Scanner;
+import java.util.ArrayList;
 public class Main{
 	public static void main(String[] args){
 		Logger.info("Starting SYNCAUTO...");
@@ -31,10 +33,45 @@ public class Main{
 			System.out.println();
 			System.out.println("Modified Files");
 			System.out.println("-------------------------------");
-			int index=1;
-			for(GitFile file:files){
-				System.out.printf("%d. [%s] %s%n",index++,file.getStatus(),file.getPath());}
-			Logger.success("Initialization complete(phase 2.1).");
+			int index = 1;
+			for(GitFile file : files){System.out.printf("%d. %s%n",index++,file.getPath());}
+			System.out.println();
+			System.out.println("Enter '.' to stage all");
+			System.out.println("or file numbers separated by commas.");
+			System.out.print("> ");
+			Scanner scanner = new Scanner(System.in);
+			String input = scanner.nextLine().trim();
+			boolean staged = false;
+			if(input.equals(".")) {
+    				staged = gitService.stageAll();} 
+			else{
+    				String[] selections = input.split(",");
+    				List<String> selectedFiles = new ArrayList<>();
+    				for (String selection : selections) {
+        				int selectedIndex =Integer.parseInt(selection.trim())-1;
+        				if (selectedIndex >= 0&&selectedIndex < files.size()){
+            					selectedFiles.add(files.get(selectedIndex).getPath());
+					}
+				}
+				staged = gitService.stageFiles(selectedFiles);
+			}
+			if (!staged){
+    				Logger.error("Failed to stage files.");
+    				return;
+			}
+			Logger.success("Files staged successfully.");
+			List<String> stagedFiles=gitService.getStagedFiles();
+			if (stagedFiles.isEmpty()){
+    				Logger.error("No staged files found.");
+    				return;
+			}
+			System.out.println();
+			System.out.println("Staged Files");
+			System.out.println("------------------------");
+			for (String file : stagedFiles){
+    			System.out.println(file);
+			}
+			Logger.success("Initialization complete).");
 		} catch (InvalidConfigException e){
 			Logger.error("Failed to load configuration.");
 			Logger.error(e.getMessage());
