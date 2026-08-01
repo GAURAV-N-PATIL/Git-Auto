@@ -6,3 +6,6 @@ may be i should use different
 test 2
 result: fail, reason old api key cerebrus is already stored 
 i need to delete it!
+test 3
+result: fail, reason model is paid 
+i need to look for the free model
