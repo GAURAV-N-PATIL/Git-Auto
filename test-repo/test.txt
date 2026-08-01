@@ -1,3 +1,8 @@
 Basic version 1 
 test 1 
-result: 
+result: fail, reason cerebrus is paid 
+may be i should use different
+(note to myself before changing check if it is free or not)
+test 2
+result: fail, reason old api key cerebrus is already stored 
+i need to delete it!
