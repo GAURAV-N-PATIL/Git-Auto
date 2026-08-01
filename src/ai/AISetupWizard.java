@@ -16,7 +16,7 @@ public class AISetupWizard {
         System.out.println();
         System.out.println("No API key was found.");
         System.out.println("AI-generated commit messages require");
-        System.out.println("a Cerebras API key.");
+        System.out.println("an OpenRouter API key (free models available).");
         System.out.println();
         while (true) {
             System.out.println("1. Show API key instructions");
@@ -41,24 +41,26 @@ public class AISetupWizard {
     private void showInstructions() {
 	System.out.println();
     	System.out.println("======================================");
-    	System.out.println("       Cerebras API Key Setup");
+    	System.out.println("       OpenRouter API Key Setup");
     	System.out.println("======================================");
     	System.out.println();
-    	System.out.println("1. Create a free Cerebras account (or sign in).");
-    	System.out.println("2. Open the Cloud Console.");
-    	System.out.println("3. Navigate to API Keys.");
-    	System.out.println("4. Create a new API key.");
-    	System.out.println("5. Copy the generated key.");
-    	System.out.println("6. Return here and paste it.");
+    	System.out.println("1. Create a free OpenRouter account (or sign in).");
+    	System.out.println("2. Open the Keys page.");
+    	System.out.println("3. Click 'Create Key'.");
+    	System.out.println("4. Copy the generated key.");
+    	System.out.println("5. Return here and paste it.");
     	System.out.println();
-    	System.out.println("Cloud Console:");
-    	System.out.println("https://cloud.cerebras.ai");
+    	System.out.println("No credit card is required to use");
+    	System.out.println("models whose name ends in ':free'.");
+    	System.out.println();
+    	System.out.println("Sign up:");
+    	System.out.println("https://openrouter.ai");
     	System.out.println();
     	System.out.println("API Keys:");
-    	System.out.println("https://cloud.cerebras.ai/platform/api-keys");
+    	System.out.println("https://openrouter.ai/keys");
     	System.out.println();
     	System.out.println("Documentation:");
-    	System.out.println("https://inference-docs.cerebras.ai/console/api-keys");
+    	System.out.println("https://openrouter.ai/docs/quickstart");
    	System.out.println();
     }
     private String setupApiKey() {
