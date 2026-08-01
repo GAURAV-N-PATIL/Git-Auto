@@ -5,6 +5,7 @@ import git.GitService;
 import logger.Logger;
 import model.GitFile;
 import util.Messages;
+import ui.ConsoleUI;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,7 +14,8 @@ import java.util.Scanner;
 
 public class Main{
     public static void main(String[] args) {
-        Logger.info("Starting SYNCAUTO...");
+	ConsoleUI.banner();
+        Logger.info(Messages.STARTING);
         String configPath = args.length > 0
                 ? args[0]
                 : System.getProperty("user.dir")
@@ -50,7 +52,15 @@ public class Main{
                 Logger.error(Messages.NO_STAGED_FILES);
                 return;
             }
-            printStagedFiles(stagedFiles);
+            printStagedFiles(stagedFiles);       
+	    System.out.println();
+	    System.out.println("Repository : "+new File(System.getProperty("user.dir")).getName());
+            System.out.println("Branch     : "+gitService.getCurrentBranch());
+            System.out.println("Files      : "+stagedFiles.size()+" staged");
+            System.out.println();
+            System.out.println("Next Step:");
+            System.out.println("AI Commit Message Generation");
+            System.out.println();
             Logger.success(Messages.INITIALIZATION_COMPLETE);
         } catch (InvalidConfigException e) {
             Logger.error(Messages.CONFIG_LOAD_FAILED);
@@ -69,7 +79,7 @@ public class Main{
         System.out.println(Messages.DIVIDER);
         int index = 1;
         for (GitFile file : files) {
-            System.out.printf("%d. %s%n",
+            System.out.printf("[%d] %s%n",
                     index++,
                     file.getPath());
         }
@@ -78,9 +88,9 @@ public class Main{
         System.out.println();
         System.out.println(Messages.STAGED_FILES_HEADER);
         System.out.println(Messages.DIVIDER);
-        for (String file : stagedFiles) {
-            System.out.println(file);
-        }
+        for (String file : stagedFiles){
+		System.out.printf("✓ %s%n", file);
+	}
     }
     private static boolean stageFiles(GitService gitService,List<GitFile> files) {
         Scanner scanner = new Scanner(System.in);
