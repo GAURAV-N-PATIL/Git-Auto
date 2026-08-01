@@ -1,8 +1,8 @@
 package ai;
-public class AICOnfig{
+public class AIConfig{
 	private String provider;
 	private String model;
-	private String apikey;
+	private String apiKey;
 	public AIConfig(){
 	}
 	public AIConfig(String provider,String model,String apiKey){
