@@ -9,3 +9,5 @@ i need to delete it!
 test 3
 result: fail, reason model is paid 
 i need to look for the free model
+test 4: pass models is working well
+

@@ -42,7 +42,7 @@ No scopes, no bodies, no markdown — just a clean, conventional one-liner under
 - Git installed and available on your `PATH`
 - A free [OpenRouter](https://openrouter.ai) account, if you want AI-generated commit messages
 
-## Getting started
+## How to use:
 
 ### Option A — install `gitauto` as a command (recommended)
 
@@ -150,7 +150,7 @@ Say **n** (or leave `auto.commit=false`) and Git-Auto behaves exactly as before:
 $ gitauto
 
 ========================================================
-                      SYNCAUTO
+                      GITAUTO
 ========================================================
 
 [INFO] Starting Git-Auto...
@@ -250,6 +250,8 @@ Git-Auto-main/
 ```
 
 ## Roadmap / known limitations
+
+**These are the things i will later impliment**
 
 - **Directory watching** (`watcher/`) — currently unimplemented. Auto mode detects changes by polling `git status` every 5 seconds instead of using OS-level filesystem events. This is simpler and avoids `.git`-folder/recursive-watch edge cases, but it does mean up to a few seconds of lag before a change is noticed, and it can't distinguish *what* changed mid-cycle — only that the working tree differs from the last poll.
 - **Full CLI argument parsing** (`cli/CLIParser.java`) — currently only an optional config path is accepted as `args[0]`. Flags like `--once` (skip the auto-mode prompt) or `--yes` (skip confirmation) aren't there yet.

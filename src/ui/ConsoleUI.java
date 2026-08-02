@@ -7,7 +7,7 @@ public final class ConsoleUI {
     public static void banner() {
         System.out.println();
         System.out.println(LINE);
-        System.out.printf("%30s%n", "SYNCAUTO");
+        System.out.printf("%30s%n", "GITAUTO");
         System.out.println(LINE);
         System.out.println();
     }
