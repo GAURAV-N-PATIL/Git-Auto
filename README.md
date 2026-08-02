@@ -4,9 +4,9 @@ A small CLI tool that automates the boring parts of committing: it scans your re
 
 Built in plain Java with no external dependencies.
 
+### Note to other: If model ever become paid just tell me i will look for the other free model
 ## Features
 
-- **Run it as `gitauto` from anywhere** — no `cd`-ing into the project or typing `./scripts/run.sh`.
 - **Auto mode** — with your permission, commits (and optionally pushes) automatically once the repo's been idle for a configurable stretch. Runs unattended until you stop it.
 - **Change detection** — scans the current repo (`git status --porcelain`) and lists every modified, added, or deleted file.
 - **Selective staging** — stage everything with `.`, or pick specific files by number (`1,3,4`).
@@ -25,14 +25,14 @@ AI-generated messages follow a strict, single-line format:
 
 Only these types are used:
 
-| Type       | Meaning                                        |
-|------------|-------------------------------------------------|
-| `feat`     | A new feature                                   |
-| `fix`      | A bug fix                                       |
-| `docs`     | Documentation changes                           |
-| `chore`    | Maintenance, config changes                     |
-| `refactor` | Code restructuring without behavior change      |
-| `ci`       | Changes to CI/CD configuration                  |
+| Type       | Meaning                                    |
+| ---------- | ------------------------------------------ |
+| `feat`     | A new feature                              |
+| `fix`      | A bug fix                                  |
+| `docs`     | Documentation changes                      |
+| `chore`    | Maintenance, config changes                |
+| `refactor` | Code restructuring without behavior change |
+| `ci`       | Changes to CI/CD configuration             |
 
 No scopes, no bodies, no markdown — just a clean, conventional one-liner under 72 characters.
 
@@ -40,45 +40,19 @@ No scopes, no bodies, no markdown — just a clean, conventional one-liner under
 
 - Java 17 or newer (the codebase uses text blocks and `String.formatted`)
 - Git installed and available on your `PATH`
+	(note: just to )
 - A free [OpenRouter](https://openrouter.ai) account, if you want AI-generated commit messages
 
 ## How to use:
 
-### Option A — install `gitauto` as a command (recommended)
-
+**Install with one command:**
 ```bash
-./scripts/install.sh
+curl -fsSL https://raw.githubusercontent.com/GAURAV-N-PATIL/Git-Auto/master/install.sh | bash
 ```
+with this you can use this in any of your repository.
 
-This builds the project and puts a `gitauto` wrapper on your `PATH` (in `~/.local/bin`). If that directory isn't already on your `PATH`, the script tells you the one line to add to your shell profile. After that:
-
+**These are the configurations(You can change idle.time to change timing between auto commits)**
 ```bash
-gitauto
-```
-
-runs from inside any repo — no need to `cd` into this project or remember `./scripts/run.sh`.
-
-### Option B — run from the project directory
-
-```bash
-./scripts/build.sh   # compiles src/ into bin/
-./scripts/run.sh      # java -cp bin Main
-```
-
-By default Git-Auto looks for its config at `src/config/gitauto.properties`. You can point it at a different file:
-
-```bash
-java -cp bin Main /path/to/your/gitauto.properties
-```
-
-### Clean
-
-```bash
-./scripts/clean.sh
-```
-
-Removes the `bin/` build output.
-
 ## Configuration
 
 Settings live in `gitauto.properties`:
@@ -92,14 +66,14 @@ git.branch=main
 log.level=INFO
 ```
 
-| Key            | Description                                              |
-|----------------|------------------------------------------------------------|
-| `watch.path`   | Repository directory to operate on                         |
-| `idle.time`    | Seconds of no repo changes before an auto-commit fires      |
-| `auto.commit`  | If `true`, Git-Auto offers auto mode (see below) on startup |
-| `auto.push`    | If `true`, auto mode also pushes after each auto-commit     |
-| `git.branch`   | Branch to push to when none is checked out                 |
-| `log.level`    | Log verbosity                                               |
+| Key           | Description                                                 |
+| ------------- | ----------------------------------------------------------- |
+| `watch.path`  | Repository directory to operate on                          |
+| `idle.time`   | Seconds of no repo changes before an auto-commit fires      |
+| `auto.commit` | If `true`, Git-Auto offers auto mode (see below) on startup |
+| `auto.push`   | If `true`, auto mode also pushes after each auto-commit     |
+| `git.branch`  | Branch to push to when none is checked out                  |
+| `log.level`   | Log verbosity                                               |
 
 Since it's a plain `.properties` file, you can change these without recompiling.
 
@@ -113,7 +87,7 @@ The first time Git-Auto needs to generate a commit message, it walks you through
 
 If saved, the key is stored locally at:
 
-```
+```bash
 ~/.gitauto/ai.properties
 ```
 
@@ -125,7 +99,7 @@ If no key is configured (or generation fails for any reason), Git-Auto simply fa
 
 Set `auto.commit=true` in `gitauto.properties` and Git-Auto will offer to run unattended: every time you start it, if that flag is on, it asks once —
 
-```
+```bash
 Auto mode is enabled in your config: after 300s of no changes, Git-Auto can
 commit automatically and push.
 Start in auto mode now? (y/n)
@@ -228,6 +202,7 @@ Start in auto mode now? (y/n)
 ## Project structure
 
 ```
+# there are still some files as place holder for new feature if i ever got free time i will implement them
 Git-Auto-main/
 ├── src/
 │   ├── Main.java               # Entry point: auto-mode gate + interactive flow
@@ -251,13 +226,17 @@ Git-Auto-main/
 
 ## Roadmap / known limitations
 
-**These are the things i will later impliment**
+**These are the things i will later implement**
 
 - **Directory watching** (`watcher/`) — currently unimplemented. Auto mode detects changes by polling `git status` every 5 seconds instead of using OS-level filesystem events. This is simpler and avoids `.git`-folder/recursive-watch edge cases, but it does mean up to a few seconds of lag before a change is noticed, and it can't distinguish *what* changed mid-cycle — only that the working tree differs from the last poll.
 - **Full CLI argument parsing** (`cli/CLIParser.java`) — currently only an optional config path is accepted as `args[0]`. Flags like `--once` (skip the auto-mode prompt) or `--yes` (skip confirmation) aren't there yet.
 
 Contributions or ideas on either of these are welcome.
 
+#### If you know know to make UI good feel free to contribute:
+Message class contain the messages for the interactive window   
+ConsoleUi class contain the basic ui for the it    
+**You can either help with coloring the logs** which are in the logger class
 ## License
 
 No license specified yet — treat this as a personal project until one is added.
