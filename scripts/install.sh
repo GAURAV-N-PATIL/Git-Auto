@@ -1,10 +1,18 @@
 #!/bin/bash
 set -e
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 INSTALL_DIR="$HOME/.local/bin"
+
+# Downloads/clones don't always preserve the executable bit, so make sure
+# every script here (and the wrapper we're about to write) is runnable
+# regardless of how this repo got onto disk.
+chmod +x "$SCRIPT_DIR"/*.sh 2>/dev/null || true
+
 echo "Building Git-Auto..."
-"$SCRIPT_DIR/build.sh"
+bash "$SCRIPT_DIR/build.sh"
+
 mkdir -p "$INSTALL_DIR"
 
 cat > "$INSTALL_DIR/gitauto" << WRAPPER
