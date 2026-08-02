@@ -11,20 +11,23 @@ import scheduler.CommitScheduler;
 import utils.Messages;
 import ui.ConsoleUI;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 public class Main{
+    private static final String DEFAULT_CONFIG_PATH =
+            System.getProperty("user.home")
+            + File.separator + ".gitauto"
+            + File.separator + "gitauto.properties";
     public static void main(String[] args) {
 	ConsoleUI.banner();
         Logger.info(Messages.STARTING);
-        String configPath = args.length > 0
-                ? args[0]
-                : System.getProperty("user.dir")
-                + File.separator + "src"
-                + File.separator + "config"
-                + File.separator + "gitauto.properties";
+        String configPath = args.length > 0 ? args[0] : DEFAULT_CONFIG_PATH;
+        if (args.length == 0) {
+            ensureDefaultConfigExists(configPath);
+        }
         ConfigManager configManager=new ConfigManager();
         try{
             Logger.info(Messages.LOADING_CONFIG);
@@ -94,6 +97,47 @@ public class Main{
         } catch (Exception e) {
             Logger.error(Messages.UNEXPECTED_ERROR);
             Logger.error(e.getMessage());
+        }
+    }
+    private static void ensureDefaultConfigExists(String path) {
+        File file = new File(path);
+        if (file.exists()) {
+            return;
+        }
+        File parent = file.getParentFile();
+        if (parent != null) {
+            parent.mkdirs();
+        }
+        String defaults = """
+                # Git-Auto configuration
+                # Auto-generated on first run. Edit anytime -- no rebuild needed.
+                # Location: ~/.gitauto/gitauto.properties (shared by every repo)
+
+                # Currently unused -- Git-Auto always operates on whichever
+                # repo you run it from, not a fixed path.
+                watch.path=unused
+
+                # Seconds of no repo changes before an auto-commit fires
+                # (auto mode only -- see auto.commit below)
+                idle.time=300
+
+                # If true, Git-Auto offers auto mode on startup in every repo.
+                # Starts OFF by default since this config applies everywhere.
+                auto.commit=false
+
+                # If true, auto mode also pushes after each auto-commit.
+                auto.push=false
+
+                # Branch to push to when none is checked out
+                git.branch=main
+
+                # Log verbosity
+                log.level=INFO
+                """;
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write(defaults);
+        } catch (IOException e) {
+            Logger.error("Unable to create default config at " + path);
         }
     }
     private static boolean confirmAutoMode(GitAutoConfig config) {
